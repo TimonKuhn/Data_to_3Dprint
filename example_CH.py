@@ -31,7 +31,7 @@ bbox_working_region = d3d.buffer_polygon(bbox_product, 0.1) ### buffer around th
 
 dem_path = 'example_CH\DHM200_CH.tif' ### input DEM file, can also be a DSM (.tif)
 out_image, out_transform, src = d3d.read_raster_dem_cut_to_bbox(dem_path, bbox_product)
-out_image = d3d.slice_out_image(out_image)
+out_image = d3d.slice_out_image(out_image, largest_value=2222) ### largest value in the DEM, can be found in the metadata of the DEM
 
 mesh, pcd = d3d.dem_to_mesh(out_image, out_transform, 0.1, 30, 10)  ### 3 advanced parameters, explained in detail in the Module
 

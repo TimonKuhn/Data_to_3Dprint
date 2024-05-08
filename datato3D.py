@@ -229,6 +229,7 @@ def surface_to_volume(mesh_surface, thickness=0):
 
     return extruded_mesh_legacy
 
+############################################################################################################
 def shrink_bbox(bbox_product, shrink_factor=0):
     minx, miny, maxx, maxy = bbox_product.bounds
     dx = (maxx - minx) * shrink_factor / 2
