@@ -51,7 +51,7 @@ def download_raster_files(csv_path, output_directory):
     for index, url in df.iterrows():
         # Download the TIFF file
         response = requests.get(url.iloc[0])
-        filename = f"{output_directory}raster_{index}.tif"
+        filename = f"{output_directory}/raster_{index}.tif"
         with open(filename, "wb") as file:
             file.write(response.content)
         
