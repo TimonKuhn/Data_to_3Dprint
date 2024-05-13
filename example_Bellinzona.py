@@ -10,16 +10,16 @@ import os
 
 ### Bounding Box ############################################################################################################
 
-path = 'example_Bellinzona/Bellinzona.txt' ### input coordinates in LV95 (.txt)
+path = 'example_Bellinzona/Bellinzona_klein.txt' ### input coordinates in LV95 (.txt)
 bbox_product = d3d.read_lv95_do_rectangular_bbox(path)
-bbox_working_region = d3d.buffer_polygon(bbox_product, 0.5) ### buffer around the product bbox so you do not have calculation errors at the edges
+bbox_working_region = d3d.buffer_polygon(bbox_product, 0.1) ### buffer around the product bbox so you do not have calculation errors at the edges
 
 
 ### DEM #####################################################################################################################
 
 csv_path = "example_Bellinzona\Bellinzona_links_2.0.csv"
-output_directory = "example_Bellinzona/"
-output_filename = "example_Bellinzona/merged_raster.tif"
+output_directory = "example_Bellinzona/TIF"
+output_filename = "example_Bellinzona/TIF/merged_raster.tif"
 
 # Check if the output directory already exists
 if not os.path.exists(f"{output_directory}/merged_raster.tif"):
@@ -30,19 +30,17 @@ else:
     print("Output directory already exists. Skipping download.")
 
 
-dem_path = 'example_Bellinzona\merged_raster.tif' ### input DEM file, can also be a DSM (.tif)
+dem_path = output_filename ### input DEM file, can also be a DSM (.tif)
 out_image, out_transform, src = d3d.read_raster_dem_cut_to_bbox(dem_path, bbox_working_region)
 out_image = d3d.slice_out_image(out_image)
 
-mesh, pcd = d3d.dem_to_mesh(out_image, out_transform, 0.1, 30, 6)  ### 3 advanced parameters, explained in detail in the Module
-o3d.visualization.draw_geometries([pcd, mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
+mesh, pcd = d3d.dem_to_mesh(out_image, out_transform, 0.1, 30, 8)  ### 3 advanced parameters, explained in detail in the Module
 
 mesh_cropped = d3d.cutting_mesh_with_bbox(mesh, bbox_product, 200, 2000) ### min and max height
-o3d.visualization.draw_geometries([mesh_cropped], mesh_show_back_face=True, mesh_show_wireframe=True)
 
 mesh_smooth = mesh_cropped.filter_smooth_taubin(number_of_iterations=3) ### number of iterations in smoothing
 mesh_smooth.compute_triangle_normals()
-o3d.visualization.draw_geometries([mesh_smooth], mesh_show_back_face=True, mesh_show_wireframe=True)
+
 
 
 output_file = 'example_Bellinzona/mesh_surface.ply' ### output Surface (.ply) file, normaly not used
@@ -53,7 +51,7 @@ solid_mesh = d3d.surface_to_volume(mesh_smooth, thickness)
 
 output_file = 'example_Bellinzona/mesh_solid.stl' ### output Solid (.stl) file
 o3d.io.write_triangle_mesh(output_file, solid_mesh) 
-
+o3d.visualization.draw_geometries([solid_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
 
 ### Buildings ###############################################################################################################
 
