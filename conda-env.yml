@@ -1,0 +1,18 @@
+# conda-env.yml
+name: d23d
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11.8
+  - gdal
+  - ipykernel
+  - trimesh
+  - scipy
+  - networkx
+  - geopandas
+  - numpy=1.26.4
+  - open3d==0.18.0 #only with pip
+  - ipyvtklink==0.2.1 #only with pip
+
+prefix: C:\Users\kuhnt\miniconda3\envs\datato3d
