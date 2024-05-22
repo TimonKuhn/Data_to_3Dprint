@@ -11,7 +11,11 @@ import pandas as pd
 """interesting options"""
 
 def read_lv95_do_rectangular_bbox(lv95_file):
-    # Load LV95 coordinates from a .txt file
+    # Load LV95 coordinates from a .txt file with the following structure:
+    #
+    #    left_LV95, bottom_LV95
+    #    right_LV95, top_LV95
+
     lv95_coordinates = np.loadtxt(lv95_file, delimiter=',')
 
     # Split the coordinates into two sets
@@ -34,7 +38,7 @@ def read_lv95_do_rectangular_bbox(lv95_file):
     # o3d.CutMesh(mesh, polygon)
 
 def buffer_polygon(polygon, buffer_percentage=0.2):
-    # Calculate buffer_pertentage of the polygon's length
+    # Calculate buffer_percentage of the polygon's length
     buffer_distance = buffer_percentage * polygon.length
 
     # Buffer the polygon
@@ -42,6 +46,17 @@ def buffer_polygon(polygon, buffer_percentage=0.2):
     return buffered_polygon
 
 def download_raster_files(csv_path, output_directory):
+    """
+    Downloads raster files from URLs specified in a CSV file and saves them in the output directory.
+
+    Args:
+        csv_path (str): The path to the CSV file containing the URLs of the raster files.
+        output_directory (str): The directory where the downloaded raster files will be saved.
+
+    Returns:
+        list: A list of file paths of the downloaded raster files.
+    """
+    
     # Read the CSV file
     df = pd.read_csv(csv_path)
 
@@ -61,6 +76,17 @@ def download_raster_files(csv_path, output_directory):
     return raster_files
 
 def stitch_raster_files(raster_files, output_filename): 
+    """
+    Stitch multiple raster files into a single raster file.
+
+    Args:
+        raster_files (list): A list of file paths to the raster files to be stitched.
+        output_filename (str): The file path of the output merged raster file.
+
+    Returns:
+        the merged raster file as a TIFF file at the specified output path.
+    """
+    
     # Open the first raster file to get the spatial extent
     with rasterio.open(raster_files[0]) as src:
         profile = src.profile
@@ -77,6 +103,20 @@ def stitch_raster_files(raster_files, output_filename):
     
 
 def read_raster_dem_cut_to_bbox(dem_path, polygon):
+    """
+    Reads a raster DEM file and cuts it to the specified bounding box defined by a polygon.
+
+    Args:
+        dem_path (str): The file path of the raster DEM file.
+        polygon (Polygon): The polygon defining the bounding box to cut the raster.
+
+    Returns:
+        tuple: A tuple containing the following elements:
+            - out_image (ndarray): The cut raster image.
+            - out_transform (Affine): The affine transformation matrix of the cut raster.
+            - src (rasterio.DatasetReader): The original raster dataset.
+    """
+
     with rasterio.open(dem_path) as src:
         geo = [polygon.__geo_interface__]  # Convert the bbox to GeoJSON
         out_image, out_transform = mask(src, geo, crop=True)
@@ -97,6 +137,27 @@ def slice_out_image(out_image, smallest_value=0, largest_value=10000):
 
 def dem_to_mesh(out_image, out_transform, KDTreeSearchParamHybrid_radius=0.1, KDTreeSearchParamHybrid_max_nn=30, create_from_point_cloud_poisson_depth=8, z_scale=1):
     """
+    Convert a digital elevation model (DEM) to a triangle mesh using Open3D library.
+
+    Args:
+        out_image (numpy.ndarray): The input DEM as a 2D numpy array.
+        out_transform (tuple): The affine transformation parameters as a tuple (a, b, c, d, e, f, g, h, i).
+        KDTreeSearchParamHybrid_radius (float, optional): The radius used when estimating the normals of the point cloud. 
+            Defaults to 0.1.
+        KDTreeSearchParamHybrid_max_nn (int, optional): The maximum number of nearest neighbors to consider within the search radius. 
+            Defaults to 30.
+        create_from_point_cloud_poisson_depth (int, optional): The depth of the octree used in the Poisson surface reconstruction method. 
+            Defaults to 8.
+        z_scale (float, optional): The scaling factor applied to the z-coordinate of the point cloud. 
+            Defaults to 1.
+
+    Returns:
+        tuple: A tuple containing the triangle mesh and the point cloud.
+            - mesh (open3d.geometry.TriangleMesh): The resulting triangle mesh.
+            - pcd (open3d.geometry.PointCloud): The resulting point cloud.
+    """
+    
+    """
     KDTreeSearchParamHybrid_radius: This parameter is used when estimating the normals of the point cloud. 
     It specifies the radius within which to search for neighboring points. 
     The KDTree data structure is used to efficiently find the nearest neighbors of each point. 
@@ -113,7 +174,6 @@ def dem_to_mesh(out_image, out_transform, KDTreeSearchParamHybrid_radius=0.1, KD
     A higher depth will result in a more detailed surface but will also require more computation.
     The optimal value depends on the complexity of the surface and the level of detail required.
     """
-
 
     # Get the elements of the out_transform
     a, b, c, d, e, f,g,h,i = out_transform
@@ -149,6 +209,19 @@ def dem_to_mesh(out_image, out_transform, KDTreeSearchParamHybrid_radius=0.1, KD
     return mesh, pcd
 
 def cutting_mesh_with_bbox(mesh, bbox_product, cutting_height_min=100 ,cutting_height_max=10000):
+    """
+    Cuts a mesh using a bounding box.
+
+    Args:
+        mesh (o3d.geometry.TriangleMesh): The input mesh to be cropped.
+        bbox_product (shapely.geometry.Polygon): The bounding box polygon representing the cutting area.
+        cutting_height_min (float, optional): The minimum cutting height. Defaults to 100.
+        cutting_height_max (float, optional): The maximum cutting height. Defaults to 10000.
+
+    Returns:
+        o3d.geometry.TriangleMesh: The cropped mesh.
+    """
+    
     # Convert the Polygon to a list of points
     bounding_points = np.array(bbox_product.exterior.coords)
 
@@ -172,6 +245,21 @@ def cutting_mesh_with_bbox(mesh, bbox_product, cutting_height_min=100 ,cutting_h
     return mesh_cropped
 
 def surface_to_volume(mesh_surface, thickness=0):
+    """
+    Converts a surface mesh to a volume mesh by extruding it along the z-axis.
+
+    Args:
+        mesh_surface (open3d.geometry.TriangleMesh): The input surface mesh.
+        thickness (float, optional): Thickness from the lowest point of the input mesh to the bottom of the output mesh.
+            If not provided, it is calculated to be at sea level.
+
+    Returns:
+        open3d.geometry.TriangleMesh: The extruded volume mesh.
+
+    Note:
+        The input `mesh_surface` should be an instance of `open3d.geometry.TriangleMesh` representing a surface mesh.
+        The output `extruded_mesh_legacy` is also an instance of `open3d.geometry.TriangleMesh` representing a volume mesh.
+    """
 
     """
     Thickness from lowest point of DEM to bottom of the output stl,
@@ -231,6 +319,16 @@ def surface_to_volume(mesh_surface, thickness=0):
 
 ############################################################################################################
 def shrink_bbox(bbox_product, shrink_factor=0):
+    """
+    Shrink the bounding box of a product by a given factor.
+
+    Parameters:
+    - bbox_product (Polygon): The original bounding box of the product.
+    - shrink_factor (float): The factor by which the bounding box should be shrunk. Default is 0.
+
+    Returns:
+    - bbox_product (Polygon): The shrunk bounding box of the product.
+    """
     minx, miny, maxx, maxy = bbox_product.bounds
     dx = (maxx - minx) * shrink_factor / 2
     dy = (maxy - miny) * shrink_factor / 2
@@ -238,6 +336,21 @@ def shrink_bbox(bbox_product, shrink_factor=0):
     return bbox_product
 
 def cutting_mesh_through_middle_of_faces(mesh, bbox_product):
+    """
+    Cuts a mesh through the middle of its faces using slicing planes defined by the bounding box of a product.
+
+    Parameters:
+        mesh (trimesh.Trimesh or trimesh.Scene): The input mesh to be sliced. If a trimesh.Scene is provided, it will be converted to a single trimesh.
+        bbox_product (trimesh.primitives.Box): The bounding box of the product used to define the slicing planes.
+
+    Returns:
+        trimesh.Trimesh: The sliced mesh representing the cross section of the input mesh.
+
+    Note:
+        The input mesh can be either a trimesh.Trimesh object or a trimesh.Scene object. The bounding box of the product should be a trimesh.primitives.Box object.
+        The output is a trimesh.Trimesh object representing the cross section of the input mesh.
+    """
+
     # Check if the mesh is a scene
     if isinstance(mesh, trimesh.Scene):
         # Convert the scene to a single trimesh
@@ -281,15 +394,37 @@ def cutting_mesh_through_middle_of_faces(mesh, bbox_product):
 
 ############################################################################################################
 def filter_faces_based_on_normal(mesh, direction):
+    """
+    Filters the faces of a mesh based on the dot product of their normals and a given direction.
+
+    Args:
+        mesh (Mesh): The input mesh object.
+        direction (ndarray): The direction vector used for filtering.
+
+    Returns:
+        Mesh: The filtered mesh object with only the faces where the dot product is positive.
+    """
     # Calculate the dot product of the face normals and the direction
     dot_product = mesh.face_normals.dot(direction)
     # Filter the faces where the dot product is positive
     mesh.update_faces(dot_product > 0)
     return mesh
 
-def process_missing_side_walls(vertices, bbox_product, combined_mesh, side_name, tolerance = 0.01): 
+def process_missing_side_walls(vertices, bbox_product, combined_mesh, side_name, tolerance=0.01):
+    """
+    Process missing side walls of a 3D mesh.
 
+    Parameters:
+        vertices (numpy.ndarray): Array of shape (N, 3) representing the vertices of the 3D mesh.
+        bbox_product (trimesh.primitives.Box): Bounding box of the product.
+        combined_mesh (trimesh.Trimesh): Combined mesh of the product.
+        side_name (str): Name of the side to process. Can be one of 'east', 'west', 'north', or 'south'.
+        tolerance (float, optional): Tolerance value for vertex selection. Defaults to 0.01.
 
+    Returns:
+        trimesh.Trimesh: Combined mesh with the missing side walls processed.
+    """
+    
     # Get the corners of the bbox
     bbox_corners = np.array(bbox_product.exterior.coords)
 
@@ -328,7 +463,3 @@ def process_missing_side_walls(vertices, bbox_product, combined_mesh, side_name,
         combined_mesh = trimesh.util.concatenate([combined_mesh, side_face])
     
     return combined_mesh
-
-
-
-    
