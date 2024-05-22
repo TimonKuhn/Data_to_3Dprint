@@ -124,7 +124,7 @@ def read_raster_dem_cut_to_bbox(dem_path, polygon):
 
 def slice_out_image(out_image, smallest_value=0, largest_value=10000):
     """cut/clip the dem at specific values to have valeys filled up as lakes or leave buildings at specific height"""
-    out_image = out_image[0,:-1,1:]  # slice it to needed size
+    out_image = out_image[0,:-1,1:]  # slice it to needed size as there is one axis to much and border pixels on the left and bottom that are incorrect
     for i in range(0, out_image.shape[0]):
         for j in range(0, out_image.shape[1]):
             if out_image[i][j] < smallest_value:
