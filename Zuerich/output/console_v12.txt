@@ -1,0 +1,15 @@
+start 2024-05-16 10:32:35.154966
+bboxes 2024-05-16 10:32:35.457282
+raster donwloaded 2024-05-16 10:34:32.131542
+raster einlesen 2024-05-16 11:06:50.029251
+[WARNING] C:\Open3D\build\poisson\src\ext_poisson\PoissonRecon\Src\FEMTree.IsoSurface.specialized.inl (Line 1858)
+          IsoSurfaceExtractor<3,float,class open3d::geometry::poisson::Open3DVertex<float> >::Extract
+          bad average roots: 2
+mesh zuschneiden 2024-05-16 11:37:35.034605
+mesh nachbearbeiten 2024-05-16 11:38:52.005754
+mesh oberfläche to file 2024-05-16 11:38:57.225651
+[Open3D WARNING] Ignoring attribute 'normals' for TensorMap with primary key 'positions'
+[Open3D WARNING] Ignoring attribute 'colors' for TensorMap with primary key 'positions'
+[Open3D WARNING] Ignoring attribute 'normals' for TensorMap with primary key 'indices'
+mesh to volume 2024-05-16 12:01:39.749460
+mesh solid to file 2024-05-16 12:02:06.970338
