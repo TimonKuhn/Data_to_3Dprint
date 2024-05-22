@@ -124,15 +124,8 @@ def read_raster_dem_cut_to_bbox(dem_path, polygon):
 
 def slice_out_image(out_image, smallest_value=0, largest_value=10000):
     """cut/clip the dem at specific values to have valeys filled up as lakes or leave buildings at specific height"""
-    out_image = out_image[0,:-1,1:]  # slice it to needed size as there is one axis to much and border pixels on the left and bottom that are incorrect
-    for i in range(0, out_image.shape[0]):
-        for j in range(0, out_image.shape[1]):
-            if out_image[i][j] < smallest_value:
-                out_image[i][j] = smallest_value # set negative values to 0 by default
-            elif out_image[i][j] > largest_value:
-                out_image[i][j] = largest_value # set values above 10000 to 10000
-            else:
-                pass
+    out_image = np.clip(out_image, smallest_value, largest_value)
+    out_image = out_image[0,:,:]
     return out_image
 
 def dem_to_mesh(out_image, out_transform, KDTreeSearchParamHybrid_radius=0.1, KDTreeSearchParamHybrid_max_nn=30, create_from_point_cloud_poisson_depth=8, z_scale=1):
@@ -250,7 +243,7 @@ def surface_to_volume(mesh_surface, thickness=0):
 
     Args:
         mesh_surface (open3d.geometry.TriangleMesh): The input surface mesh.
-        thickness (float, optional): Thickness from the lowest point of the input mesh to the bottom of the output mesh.
+        thickness (float, optional): Thickness in meters in model scale from the lowest point of the input mesh to the bottom of the output mesh.
             If not provided, it is calculated to be at sea level.
 
     Returns:
@@ -261,10 +254,7 @@ def surface_to_volume(mesh_surface, thickness=0):
         The output `extruded_mesh_legacy` is also an instance of `open3d.geometry.TriangleMesh` representing a volume mesh.
     """
 
-    """
-    Thickness from lowest point of DEM to bottom of the output stl,
-    standard value = 0 = is calculated to be at sea level
-    """
+
     # Convert legacy mesh to tensor-based mesh
     tensor_mesh = o3d.t.geometry.TriangleMesh.from_legacy(mesh_surface)
 
