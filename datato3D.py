@@ -124,6 +124,16 @@ def read_raster_dem_cut_to_bbox(dem_path, polygon):
 
 def slice_out_image(out_image, smallest_value=0, largest_value=10000):
     """cut/clip the dem at specific values to have valeys filled up as lakes or leave buildings at specific height"""
+    # out_image = out_image[0,:-1,1:]  # slice it to needed size
+    # for i in range(0, out_image.shape[0]):
+    #     for j in range(0, out_image.shape[1]):
+    #         if out_image[i][j] < smallest_value:
+    #             out_image[i][j] = smallest_value # set negative values to 0 by default
+    #         elif out_image[i][j] > largest_value:
+    #             out_image[i][j] = largest_value # set values above 10000 to 10000
+    #         else:
+    #             pass
+    
     out_image = np.clip(out_image, smallest_value, largest_value)
     out_image = out_image[0,:,:]
     return out_image

@@ -31,9 +31,9 @@ bbox_working_region = d3d.buffer_polygon(bbox_product, 0.1) ### buffer around th
 
 dem_path = 'example_CH\DHM200_CH.tif' ### input DEM file, can also be a DSM (.tif)
 out_image, out_transform, src = d3d.read_raster_dem_cut_to_bbox(dem_path, bbox_product)
-out_image = d3d.slice_out_image(out_image, largest_value=2222) ### largest value in the DEM, can be found in the metadata of the DEM
+out_image = d3d.slice_out_image(out_image, largest_value=5000) ### largest value in the DEM, can be found in the metadata of the DEM
 
-mesh, pcd = d3d.dem_to_mesh(out_image, out_transform, 0.1, 30, 10)  ### 3 advanced parameters, explained in detail in the Module
+mesh, pcd = d3d.dem_to_mesh(out_image, out_transform, 0.1, 30, 8)  ### 3 advanced parameters, explained in detail in the Module
 
 mesh_cropped = d3d.cutting_mesh_with_bbox(mesh, bbox_product, 1, 4500) ### min and max height
 
@@ -43,7 +43,7 @@ mesh_smooth.compute_triangle_normals()
 output_file = 'example_CH/surface_CH.ply' ### output Surface (.ply) file, normaly not used
 o3d.io.write_triangle_mesh(output_file, mesh_smooth)
 
-thickness = 800 ### thickness of the thinnest part of the solid mesh
+thickness = 2000 ### thickness of the thinnest part of the solid mesh
 solid_mesh = d3d.surface_to_volume(mesh_smooth, thickness)
 
 output_file = 'example_CH/CH.stl' ### output Solid (.stl) file 
